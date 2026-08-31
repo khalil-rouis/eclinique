@@ -1,4 +1,4 @@
-import { t as attr_class, y as attr } from "../../../../chunks/server.js";
+import { t as attr_class, v as attr } from "../../../../chunks/server.js";
 import "../../../../chunks/navigation.js";
 //#region src/routes/patient/nouveau/+page.svelte
 function _page($$renderer, $$props) {

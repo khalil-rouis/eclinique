@@ -1,4 +1,4 @@
-import { b as escape_html, r as ensure_array_like, t as attr_class, y as attr } from "../../../../chunks/server.js";
+import { r as ensure_array_like, t as attr_class, v as attr, y as escape_html } from "../../../../chunks/server.js";
 import { t as clinic_types } from "../../../../chunks/lib.js";
 import "../../../../chunks/navigation.js";
 //#region src/routes/clinique/nouveau/+page.svelte

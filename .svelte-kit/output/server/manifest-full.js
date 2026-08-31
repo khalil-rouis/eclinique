@@ -10,7 +10,7 @@ return {
 	assets: new Set(["arrow.svg","bg.svg","loading.svg","robots.txt","unverified.svg"]),
 	mimeTypes: {".svg":"image/svg+xml",".txt":"text/plain"},
 	_: {
-		client: {start:"_app/immutable/entry/start.DCBetW8w.js",app:"_app/immutable/entry/app.DS9xvdJh.js",imports:["_app/immutable/entry/start.DCBetW8w.js","_app/immutable/chunks/Bg8ZwqsV.js","_app/immutable/chunks/CXeYPkFo.js","_app/immutable/entry/app.DS9xvdJh.js","_app/immutable/chunks/CXeYPkFo.js","_app/immutable/chunks/xihTtKlq.js"],stylesheets:[],fonts:[],uses_env_dynamic_public:false},
+		client: null,
 		nodes: [
 			__memo(() => import('./nodes/0.js')),
 			__memo(() => import('./nodes/1.js')),

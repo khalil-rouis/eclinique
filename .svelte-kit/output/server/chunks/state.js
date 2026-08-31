@@ -1,5 +1,5 @@
 import "./internal.js";
-import { d as getContext } from "./server.js";
+import { m as getContext } from "./server.js";
 import "./client.js";
 //#endregion
 //#region node_modules/@sveltejs/kit/src/runtime/app/state/server.js

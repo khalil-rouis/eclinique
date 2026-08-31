@@ -1,5 +1,5 @@
 import "./internal2.js";
-import { $ as LEGACY_PROPS, A as clear_text_content, B as pop, D as set_active_effect, E as get, F as mutable_source, G as set_hydrate_node, H as async_mode_flag, I as set, K as set_hydrating, L as flushSync, M as get_first_child, N as get_next_sibling, O as set_active_reaction, P as init_operations, Q as experimental_async_required, R as boundary, T as active_reaction, U as hydrate_node, V as push, W as hydrating, X as HYDRATION_ERROR, Z as hydration_failed, _ as lifecycle_function_unavailable, a as render, c as get_render_context, d as getContext, f as hasContext, g as hydratable_serialization_failed, it as run, j as create_text, k as component_root, l as createContext, m as ssr_context, n as derived, nt as define_property, p as setContext, q as hydration_mismatch, rt as noop, tt as array_from, u as getAllContexts, v as getAbortSignal, w as active_effect, x as is_passive_event, z as component_context } from "./server.js";
+import { $ as component_context, A as branch, B as get_first_child, C as active_effect, Ct as array_from, D as set_active_reaction, E as set_active_effect, Et as run, F as pause_effect, G as mutable_source, H as init_operations, I as render_effect, J as Batch, K as set, L as invoke_error_boundary, M as destroy_effect, N as effect_tracking, O as untrack, P as move_effect, Q as queue_micro_task, R as clear_text_content, St as LEGACY_PROPS, T as get, Tt as noop, U as increment, V as get_next_sibling, W as internal_set, X as flushSync, Y as current_batch, Z as defer_effect, _ as ssr_context, a as render, at as async_mode_flag, b as is_passive_event, bt as EFFECT_PRESERVED, c as get_render_context, ct as experimental_async_required, d as lifecycle_function_unavailable, dt as hydrating, et as mark_as_component, f as createContext, ft as next, g as setContext, gt as hydration_mismatch, h as hasContext, ht as skip_nodes, j as component_root, k as block, lt as hydrate_next, m as getContext, mt as set_hydrating, n as derived, nt as push, ot as hydration_failed, p as getAllContexts, pt as set_hydrate_node, q as source, rt as set_component_context, st as svelte_boundary_reset_onerror, tt as pop, u as hydratable_serialization_failed, ut as hydrate_node, vt as svelte_boundary_reset_noop, w as active_reaction, wt as define_property, xt as EFFECT_TRANSPARENT, yt as HYDRATION_ERROR, z as create_text } from "./server.js";
 import * as devalue from "devalue";
 //#region \0rolldown/runtime.js
 var __defProp = Object.defineProperty;
@@ -42,6 +42,7 @@ var all_registered_events = /* @__PURE__ */ new Set();
 /** @type {Set<(events: Array<string>) => void>} */
 var root_event_handles = /* @__PURE__ */ new Set();
 var last_propagated_event = null;
+var last_propagated_event_clear_scheduled = false;
 /**
 * @this {EventTarget}
 * @param {Event} event
@@ -54,6 +55,13 @@ function handle_event_propagation(event) {
 	var path = event.composedPath?.() || [];
 	var current_target = path[0] || event.target;
 	last_propagated_event = event;
+	if (!last_propagated_event_clear_scheduled) {
+		last_propagated_event_clear_scheduled = true;
+		setTimeout(() => {
+			last_propagated_event_clear_scheduled = false;
+			last_propagated_event = null;
+		});
+	}
 	var path_idx = 0;
 	var handled_at = last_propagated_event === event && event[event_symbol];
 	if (handled_at) {
@@ -129,6 +137,451 @@ function assign_nodes(start, end) {
 		t: null
 	};
 }
+//#endregion
+//#region node_modules/svelte/src/reactivity/create-subscriber.js
+/**
+* Returns a `subscribe` function that integrates external event-based systems with Svelte's reactivity.
+* It's particularly useful for integrating with web APIs like `MediaQuery`, `IntersectionObserver`, or `WebSocket`.
+*
+* If `subscribe` is called inside an effect (including indirectly, for example inside a getter),
+* the `start` callback will be called with an `update` function. Whenever `update` is called, the effect re-runs.
+*
+* If `start` returns a cleanup function, it will be called when the effect is destroyed.
+*
+* If `subscribe` is called in multiple effects, `start` will only be called once as long as the effects
+* are active, and the returned teardown function will only be called when all effects are destroyed.
+*
+* It's best understood with an example. Here's an implementation of [`MediaQuery`](https://svelte.dev/docs/svelte/svelte-reactivity#MediaQuery):
+*
+* ```js
+* import { createSubscriber } from 'svelte/reactivity';
+* import { on } from 'svelte/events';
+*
+* export class MediaQuery {
+* 	#query;
+* 	#subscribe;
+*
+* 	constructor(query) {
+* 		this.#query = window.matchMedia(`(${query})`);
+*
+* 		this.#subscribe = createSubscriber((update) => {
+* 			// when the `change` event occurs, re-run any effects that read `this.current`
+* 			const off = on(this.#query, 'change', update);
+*
+* 			// stop listening when all the effects are destroyed
+* 			return () => off();
+* 		});
+* 	}
+*
+* 	get current() {
+* 		// This makes the getter reactive, if read in an effect
+* 		this.#subscribe();
+*
+* 		// Return the current state of the query, whether or not we're in an effect
+* 		return this.#query.matches;
+* 	}
+* }
+* ```
+* @param {(update: () => void) => (() => void) | void} start
+* @since 5.7.0
+*/
+function createSubscriber(start) {
+	let subscribers = 0;
+	let version = source(0);
+	/** @type {(() => void) | void} */
+	let stop;
+	return () => {
+		if (effect_tracking()) {
+			get(version);
+			render_effect(() => {
+				if (subscribers === 0) stop = untrack(() => start(() => increment(version)));
+				subscribers += 1;
+				return () => {
+					queue_micro_task(() => {
+						subscribers -= 1;
+						if (subscribers === 0) {
+							stop?.();
+							stop = void 0;
+							increment(version);
+						}
+					});
+				};
+			});
+		}
+	};
+}
+//#endregion
+//#region node_modules/svelte/src/internal/client/dom/blocks/boundary.js
+/** @import { Effect, Source, TemplateNode, } from '#client' */
+/**
+* @typedef {{
+* 	 onerror?: ((error: unknown, reset: () => void) => void) | null;
+*   failed?: ((anchor: Node, error: () => unknown, reset: () => () => void) => void) | null;
+*   pending?: ((anchor: Node) => void) | null;
+* }} BoundaryProps
+*/
+var flags = EFFECT_TRANSPARENT | EFFECT_PRESERVED;
+/**
+* @param {TemplateNode} node
+* @param {BoundaryProps} props
+* @param {((anchor: Node) => void)} children
+* @param {((error: unknown) => unknown) | undefined} [transform_error]
+* @returns {void}
+*/
+function boundary(node, props, children, transform_error) {
+	new Boundary(node, props, children, transform_error);
+}
+var Boundary = class {
+	/** @type {Boundary | null} */
+	parent;
+	is_pending = false;
+	/**
+	* API-level transformError transform function. Transforms errors before they reach the `failed` snippet.
+	* Inherited from parent boundary, or defaults to identity.
+	* @type {(error: unknown) => unknown}
+	*/
+	transform_error;
+	/** @type {TemplateNode} */
+	#anchor;
+	/** @type {TemplateNode | null} */
+	#hydrate_open = hydrating ? hydrate_node : null;
+	/** @type {BoundaryProps} */
+	#props;
+	/** @type {((anchor: Node) => void)} */
+	#children;
+	/** @type {Effect} */
+	#effect;
+	/** @type {Effect | null} */
+	#main_effect = null;
+	/** @type {Effect | null} */
+	#pending_effect = null;
+	/** @type {Effect | null} */
+	#failed_effect = null;
+	/** @type {DocumentFragment | null} */
+	#offscreen_fragment = null;
+	#local_pending_count = 0;
+	#pending_count = 0;
+	#pending_count_update_queued = false;
+	/** @type {Set<Effect>} */
+	#dirty_effects = /* @__PURE__ */ new Set();
+	/** @type {Set<Effect>} */
+	#maybe_dirty_effects = /* @__PURE__ */ new Set();
+	/**
+	* A source containing the number of pending async deriveds/expressions.
+	* Only created if `$effect.pending()` is used inside the boundary,
+	* otherwise updating the source results in needless `Batch.ensure()`
+	* calls followed by no-op flushes
+	* @type {Source<number> | null}
+	*/
+	#effect_pending = null;
+	#effect_pending_subscriber = createSubscriber(() => {
+		this.#effect_pending = source(this.#local_pending_count);
+		return () => {
+			this.#effect_pending = null;
+		};
+	});
+	/**
+	* @param {TemplateNode} node
+	* @param {BoundaryProps} props
+	* @param {((anchor: Node) => void)} children
+	* @param {((error: unknown) => unknown) | undefined} [transform_error]
+	*/
+	constructor(node, props, children, transform_error) {
+		this.#anchor = node;
+		this.#props = props;
+		this.#children = (anchor) => {
+			var effect = active_effect;
+			effect.b = this;
+			effect.f |= 128;
+			children(anchor);
+		};
+		this.parent = active_effect.b;
+		this.transform_error = transform_error ?? this.parent?.transform_error ?? ((e) => e);
+		this.#effect = block(() => {
+			if (hydrating) {
+				const comment = this.#hydrate_open;
+				hydrate_next();
+				const server_rendered_pending = comment.data === "[!";
+				if (comment.data.startsWith("[?")) {
+					const serialized_error = JSON.parse(comment.data.slice(2));
+					this.#hydrate_failed_content(serialized_error);
+				} else if (server_rendered_pending) this.#hydrate_pending_content();
+				else this.#hydrate_resolved_content();
+			} else this.#render();
+		}, flags);
+		if (hydrating) this.#anchor = hydrate_node;
+	}
+	#hydrate_resolved_content() {
+		try {
+			this.#main_effect = branch(() => this.#children(this.#anchor));
+		} catch (error) {
+			this.error(error);
+		}
+	}
+	/**
+	* @param {unknown} error The deserialized error from the server's hydration comment
+	*/
+	#hydrate_failed_content(error) {
+		const failed = this.#props.failed;
+		const { reset, invoke_onerror } = this.#create_reset(error);
+		queue_micro_task(invoke_onerror);
+		if (!failed) return;
+		this.#failed_effect = branch(() => {
+			failed(this.#anchor, () => error, () => reset);
+		});
+	}
+	/**
+	* Creates the `reset` function for a failed boundary, along with a function
+	* that invokes `onerror` with it (if provided)
+	* @param {unknown} error
+	* @returns {{ reset: () => void, invoke_onerror: () => void }}
+	*/
+	#create_reset(error) {
+		var did_reset = false;
+		var calling_on_error = false;
+		const reset = () => {
+			if (did_reset) {
+				svelte_boundary_reset_noop();
+				return;
+			}
+			did_reset = true;
+			if (calling_on_error) svelte_boundary_reset_onerror();
+			if (this.#failed_effect !== null) pause_effect(this.#failed_effect, () => {
+				this.#failed_effect = null;
+			});
+			this.#run(() => {
+				this.#render();
+			});
+		};
+		const invoke_onerror = () => {
+			try {
+				calling_on_error = true;
+				this.#props.onerror?.(error, reset);
+				calling_on_error = false;
+			} catch (err) {
+				invoke_error_boundary(err, this.#effect && this.#effect.parent);
+			}
+		};
+		return {
+			reset,
+			invoke_onerror
+		};
+	}
+	#hydrate_pending_content() {
+		const pending = this.#props.pending;
+		if (!pending) return;
+		this.is_pending = true;
+		this.#pending_effect = branch(() => pending(this.#anchor));
+		queue_micro_task(() => {
+			var fragment = this.#offscreen_fragment = document.createDocumentFragment();
+			var anchor = create_text();
+			var handled = false;
+			fragment.append(anchor);
+			this.#main_effect = this.#run(() => {
+				try {
+					return branch(() => this.#children(anchor));
+				} catch (error) {
+					try {
+						this.error(error);
+						handled = true;
+					} catch (error) {
+						invoke_error_boundary(error, this.#effect.parent);
+					}
+					return null;
+				}
+			});
+			if (this.#main_effect === null) {
+				this.#offscreen_fragment = null;
+				if (handled) this.#resolve(current_batch);
+				return;
+			}
+			if (this.#pending_count === 0) {
+				this.#anchor.before(fragment);
+				this.#offscreen_fragment = null;
+				pause_effect(this.#pending_effect, () => {
+					this.#pending_effect = null;
+				});
+				this.#resolve(current_batch);
+			}
+		});
+	}
+	#render() {
+		try {
+			this.is_pending = this.has_pending_snippet();
+			this.#pending_count = 0;
+			this.#local_pending_count = 0;
+			this.#main_effect = branch(() => {
+				this.#children(this.#anchor);
+			});
+			if (this.#pending_count > 0) {
+				var fragment = this.#offscreen_fragment = document.createDocumentFragment();
+				move_effect(this.#main_effect, fragment);
+				const pending = this.#props.pending;
+				this.#pending_effect = branch(() => pending(this.#anchor));
+			} else this.#resolve(current_batch);
+		} catch (error) {
+			this.error(error);
+		}
+	}
+	/**
+	* @param {Batch} batch
+	*/
+	#resolve(batch) {
+		this.is_pending = false;
+		batch.transfer_effects(this.#dirty_effects, this.#maybe_dirty_effects);
+	}
+	/**
+	* Defer an effect inside a pending boundary until the boundary resolves
+	* @param {Effect} effect
+	*/
+	defer_effect(effect) {
+		defer_effect(effect, this.#dirty_effects, this.#maybe_dirty_effects);
+	}
+	/**
+	* Returns `false` if the effect exists inside a boundary whose pending snippet is shown
+	* @returns {boolean}
+	*/
+	is_rendered() {
+		return !this.is_pending && (!this.parent || this.parent.is_rendered());
+	}
+	has_pending_snippet() {
+		return !!this.#props.pending;
+	}
+	/**
+	* @template T
+	* @param {() => T} fn
+	*/
+	#run(fn) {
+		var previous_effect = active_effect;
+		var previous_reaction = active_reaction;
+		var previous_ctx = component_context;
+		set_active_effect(this.#effect);
+		set_active_reaction(this.#effect);
+		set_component_context(this.#effect.ctx);
+		try {
+			Batch.ensure();
+			return fn();
+		} finally {
+			set_active_effect(previous_effect);
+			set_active_reaction(previous_reaction);
+			set_component_context(previous_ctx);
+		}
+	}
+	/**
+	* Updates the pending count associated with the currently visible pending snippet,
+	* if any, such that we can replace the snippet with content once work is done
+	* @param {1 | -1} d
+	* @param {Batch} batch
+	*/
+	#update_pending_count(d, batch) {
+		if (!this.has_pending_snippet()) {
+			if (this.parent) this.parent.#update_pending_count(d, batch);
+			return;
+		}
+		this.#pending_count += d;
+		if (this.#pending_count === 0) {
+			this.#resolve(batch);
+			if (this.#pending_effect) pause_effect(this.#pending_effect, () => {
+				this.#pending_effect = null;
+			});
+			if (this.#offscreen_fragment) {
+				this.#anchor.before(this.#offscreen_fragment);
+				this.#offscreen_fragment = null;
+			}
+		}
+	}
+	/**
+	* Update the source that powers `$effect.pending()` inside this boundary,
+	* and controls when the current `pending` snippet (if any) is removed.
+	* Do not call from inside the class
+	* @param {1 | -1} d
+	* @param {Batch} batch
+	*/
+	update_pending_count(d, batch) {
+		this.#update_pending_count(d, batch);
+		this.#local_pending_count += d;
+		if (!this.#effect_pending || this.#pending_count_update_queued) return;
+		this.#pending_count_update_queued = true;
+		queue_micro_task(() => {
+			this.#pending_count_update_queued = false;
+			if (this.#effect_pending) internal_set(this.#effect_pending, this.#local_pending_count);
+		});
+	}
+	get_effect_pending() {
+		this.#effect_pending_subscriber();
+		return get(this.#effect_pending);
+	}
+	/** @param {unknown} error */
+	error(error) {
+		if (!this.#props.onerror && !this.#props.failed) throw error;
+		if (current_batch?.is_fork) {
+			if (this.#main_effect) current_batch.skip_effect(this.#main_effect);
+			if (this.#pending_effect) current_batch.skip_effect(this.#pending_effect);
+			if (this.#failed_effect) current_batch.skip_effect(this.#failed_effect);
+			current_batch.oncommit(() => {
+				this.#handle_error(error);
+			});
+		} else this.#handle_error(error);
+	}
+	/**
+	* @param {unknown} error
+	*/
+	#handle_error(error) {
+		if (this.#main_effect) {
+			destroy_effect(this.#main_effect);
+			this.#main_effect = null;
+		}
+		if (this.#pending_effect) {
+			destroy_effect(this.#pending_effect);
+			this.#pending_effect = null;
+		}
+		if (this.#failed_effect) {
+			destroy_effect(this.#failed_effect);
+			this.#failed_effect = null;
+		}
+		if (hydrating) {
+			set_hydrate_node(this.#hydrate_open);
+			next();
+			set_hydrate_node(skip_nodes());
+		}
+		let failed = this.#props.failed;
+		/** @param {unknown} transformed_error */
+		const handle_error_result = (transformed_error) => {
+			const { reset, invoke_onerror } = this.#create_reset(transformed_error);
+			invoke_onerror();
+			if (failed) this.#failed_effect = this.#run(() => {
+				try {
+					return branch(() => {
+						var effect = active_effect;
+						effect.b = this;
+						effect.f |= 128;
+						failed(this.#anchor, () => transformed_error, () => reset);
+					});
+				} catch (error) {
+					invoke_error_boundary(error, this.#effect.parent);
+					return null;
+				}
+			});
+		};
+		queue_micro_task(() => {
+			/** @type {unknown} */
+			var result;
+			try {
+				result = this.transform_error(error);
+			} catch (e) {
+				invoke_error_boundary(e, this.#effect && this.#effect.parent);
+				return;
+			}
+			if (result !== null && typeof result === "object" && typeof result.then === "function")
+ /** @type {any} */ result.then(
+				handle_error_result,
+				/** @param {unknown} e */
+				(e) => invoke_error_boundary(e, this.#effect && this.#effect.parent)
+			);
+			else handle_error_result(result);
+		});
+	}
+};
 /**
 * Mounts a component to the given target and returns the exports and potentially the props (if compiled with `accessors: true`) of the component.
 * Transitions will play during the initial render unless the `intro` option is set to `false`.
@@ -219,7 +672,7 @@ function _mount(Component, { target, anchor, props = {}, events, context, intro 
 			if (events)
  /** @type {any} */ props.$$events = events;
 			if (hydrating) assign_nodes(anchor_node, null);
-			component = Component(anchor_node, props) || {};
+			component = Component(anchor_node, props) || mark_as_component();
 			if (hydrating) {
 				/** @type {Effect & { nodes: EffectNodes }} */ active_effect.nodes.end = hydrate_node;
 				if (hydrate_node === null || hydrate_node.nodeType !== 8 || hydrate_node.data !== "]") {
@@ -432,7 +885,7 @@ var Svelte4Component = class {
 //#endregion
 //#region node_modules/svelte/src/legacy/legacy-server.js
 /** @import { SvelteComponent } from '../index.js' */
-/** @import { Csp } from '#server' */
+/** @import { Csp } from '../server/public.js' */
 /** @typedef {{ head: string, html: string, css: { code: string, map: null }; hashes?: { script: `sha256-${string}`[] } }} LegacyRenderResult */
 /**
 * Takes a Svelte 5 component and returns a Svelte 4 compatible component constructor.
@@ -496,6 +949,16 @@ value: (onfulfilled, onrejected) => {
 	};
 	component_constructor.render = _render;
 	return component_constructor;
+}
+//#endregion
+//#region node_modules/svelte/src/internal/server/abort-signal.js
+function getAbortSignal() {
+	let context = ssr_context;
+	while (context !== null) {
+		if (context.r !== null) return context.r.global.get_abort_signal();
+		context = context.p;
+	}
+	return new AbortController().signal;
 }
 //#endregion
 //#region node_modules/svelte/src/internal/server/hydratable.js
@@ -724,7 +1187,7 @@ var options = {
 		app: ({ head, body, assets, nonce, env }) => "<!doctype html>\n<html lang=\"en\">\n	<head>\n		<meta charset=\"utf-8\" />\n		<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\" />\n		<meta name=\"text-scale\" content=\"scale\" />\n		" + head + "\n	</head>\n	<body data-sveltekit-preload-data=\"hover\">\n		<div style=\"display: contents\">" + body + "</div>\n	</body>\n</html>\n",
 		error: error_template_default
 	},
-	version_hash: "lu31kg"
+	version_hash: "1a5sb9w"
 };
 async function get_hooks() {
 	let handle;

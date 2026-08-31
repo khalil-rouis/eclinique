@@ -1,10 +1,10 @@
 import { MongoClient } from "mongodb";
 //#region \0virtual:env/static/private
 /** @type {import('$env/static/private').MONGO_DB} */
-var MONGO_DB = "pointiclinique";
+var MONGO_DB = "[SENSITIVE]";
 //#endregion
 //#region src/lib/mongodb.ts
-var client = new MongoClient("mongodb://localhost:27017");
+var client = new MongoClient("[SENSITIVE]");
 var accountsColl;
 var connectMongo = async () => {
 	await client.connect();
