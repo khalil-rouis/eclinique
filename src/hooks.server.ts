@@ -23,3 +23,19 @@ const runShutdownCommand = async () => {
 
 process.on('SIGINT', runShutdownCommand);
 process.on('SIGTERM', runShutdownCommand);
+
+export async function handle({ event, resolve }) {
+  if (event.request.method === 'OPTIONS') {
+    return new Response(null, {
+      headers: {
+        'Access-Control-Allow-Origin': '*', // or specific origin
+        'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+        'Access-Control-Allow-Headers': 'Content-Type, Authorization'
+      }
+    });
+  }
+
+  const response = await resolve(event);
+  response.headers.append('Access-Control-Allow-Origin', '*');
+  return response;
+}
