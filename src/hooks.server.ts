@@ -20,10 +20,10 @@ const runShutdownCommand = async () => {
     disRedis();
     process.exit(0);
 }
-
+/*
 process.on('SIGINT', runShutdownCommand);
 process.on('SIGTERM', runShutdownCommand);
-
+*/
 export async function handle({ event, resolve }) {
   if (event.request.method === 'OPTIONS') {
     return new Response(null, {
