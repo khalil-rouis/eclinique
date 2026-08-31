@@ -1,0 +1,25 @@
+{
+	"/": [],
+	"/clinique/aurevoire": [
+		"src/routes/clinique/aurevoire/+page.server.ts"
+	],
+	"/clinique/bonjour": [
+		"src/routes/clinique/bonjour/+server.ts"
+	],
+	"/clinique/compte": [
+		"src/routes/clinique/compte/+page.server.ts"
+	],
+	"/clinique/nouveau": [
+		"src/routes/clinique/nouveau/+server.ts"
+	],
+	"/patient/aurevoire": [
+		"src/routes/patient/aurevoire/+page.server.ts"
+	],
+	"/patient/bonjour": [
+		"src/routes/patient/bonjour/+server.ts"
+	],
+	"/patient/compte": [],
+	"/patient/nouveau": [
+		"src/routes/patient/nouveau/+server.ts"
+	]
+}
