@@ -1,10 +1,14 @@
 import { MongoClient } from "mongodb";
 //#region \0virtual:env/static/private
 /** @type {import('$env/static/private').MONGO_DB} */
-var MONGO_DB = "[SENSITIVE]";
+var MONGO_DB = "pointiclinique";
+/** @type {import('$env/static/private').MONGO_URL} */
+var MONGO_URL = "mongodb://localhost:27017";
+/** @type {import('$env/static/private').REDIS_URL} */
+var REDIS_URL = "redis://localhost:6379";
 //#endregion
 //#region src/lib/mongodb.ts
-var client = new MongoClient("[SENSITIVE]");
+var client = new MongoClient(MONGO_URL);
 var accountsColl;
 var connectMongo = async () => {
 	await client.connect();
@@ -23,4 +27,4 @@ var disMongo = async () => {
 	await client.close();
 };
 //#endregion
-export { connectMongo as n, disMongo as r, accountsColl as t };
+export { REDIS_URL as i, connectMongo as n, disMongo as r, accountsColl as t };

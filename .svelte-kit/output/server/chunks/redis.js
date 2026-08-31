@@ -1,6 +1,7 @@
+import { i as REDIS_URL } from "./mongodb.js";
 import { createClient } from "redis";
 //#region src/lib/redis.ts
-var redisClient = createClient({ url: "redis://localhost:6379" });
+var redisClient = createClient({ url: REDIS_URL });
 redisClient.on("error", (err) => console.error("Redis Client Error:", err));
 var connectRedis = async () => {
 	await redisClient.connect();

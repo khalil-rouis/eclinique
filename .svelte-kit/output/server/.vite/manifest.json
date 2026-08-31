@@ -71,7 +71,10 @@
   },
   "_redis.js": {
     "file": "chunks/redis.js",
-    "name": "redis"
+    "name": "redis",
+    "imports": [
+      "_mongodb.js"
+    ]
   },
   "_server.js": {
     "file": "chunks/server.js",

@@ -1,7 +1,7 @@
 import { createClient } from "redis";
-import { MONGO_URL } from "$env/static/private";
+import { REDIS_URL } from "$env/static/private";
 
-export const redisClient = createClient({ url: MONGO_URL });
+export const redisClient = createClient({ url: REDIS_URL });
 redisClient.on('error', (err) => console.error('Redis Client Error:', err));
 
 export const connectRedis = async () => {
