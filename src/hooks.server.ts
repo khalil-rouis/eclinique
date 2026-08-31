@@ -1,9 +1,12 @@
 import { connectMongo, disMongo } from "$lib/mongodb"
 import { connectRedis, disRedis } from "$lib/redis";
+import { building } from '$app/environment';
 
 export const init = async () => {
-    await connectMongo();
-    await connectRedis();
+    if (!building) {
+        await connectMongo();
+        await connectRedis();
+    }
 }
 
 let isAlrClosing = false;
