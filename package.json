@@ -30,6 +30,7 @@
 		"vite": "^8.0.16"
 	},
 	"dependencies": {
+		"@opentelemetry/api": "^1.9.1",
 		"daisyui": "^5.7.20",
 		"mongodb": "^7.6.0",
 		"redis": "^6.2.1",
