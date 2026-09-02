@@ -1,12 +1,17 @@
 import { connectMongo, disMongo } from "$lib/mongodb"
 import { connectRedis, disRedis } from "$lib/redis";
 
+let isAlrClosing = false, isConnected = false;
+
+
 export const init = async () => {
-    await connectMongo();
-    await connectRedis();
+    if (!isConnected) {
+        await connectMongo();
+        await connectRedis();
+        isConnected = true;
+    }
 }
 
-let isAlrClosing = false;
 
 const runShutdownCommand = async () => {
     if (isAlrClosing) return;

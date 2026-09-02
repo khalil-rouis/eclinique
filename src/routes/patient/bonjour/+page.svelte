@@ -34,7 +34,7 @@
 	};
 </script>
 
-<div class="hero min-h-screen" style="background: url('../bg.svg');">
+<div class="hero min-h-screen">
 	<div class="hero-content flex-col gap-5">
 		<div class="text-center lg:text-left">
 			<h1 class="text-3xl font-bold drop-shadow-xl sm:text-5xl">Se connecter</h1>

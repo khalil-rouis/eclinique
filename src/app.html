@@ -6,7 +6,18 @@
 		<meta name="text-scale" content="scale" />
 		%sveltekit.head%
 	</head>
-	<body data-sveltekit-preload-data="hover">
-		<div style="display: contents">%sveltekit.body%</div>
+	
+	<body data-sveltekit-preload-data="hover" class="bg-[#100e0b]">
+		<div class="relative overflow-hidden min-h-screen">
+			<div class="absolute inset-0 pointer-events-none blur-[105px] md:blur-[151px]"
+				style="background: radial-gradient(ellipse 46% 52% at 50% 50%, rgba(229, 244, 255, 0.27) 0%, rgba(22,65,49,0.13) 45%, transparent 80%); mix-blend-mode: screen" aria-hidden="true"></div>
+			<div class="absolute inset-0 pointer-events-none blur-[200px] md:blur-[260px] opacity-0"
+				style="background: linear-gradient(125deg, transparent 35%, rgba(179, 244, 214, 0.1) 52%, transparent 68%); mix-blend-mode: soft-light" aria-hidden="true"></div>
+
+			<div class="relative z-1">
+				<div style="display: contents">%sveltekit.body%</div>
+			</div>
+		</div>
+
 	</body>
 </html>

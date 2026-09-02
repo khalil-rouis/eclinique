@@ -5,6 +5,8 @@ export type PatientInformation = {
     full_name: string;
     reg_password: string;
     phone: string;
+    verified: boolean;
+    type: string;
 }
 
 export type ClinicInformation = {
@@ -14,6 +16,8 @@ export type ClinicInformation = {
     reg_email: string;
     reg_password: string;
     phone: string;
+    verified: boolean;
+    type: string;
 };
 
 export type LoginInformation = {

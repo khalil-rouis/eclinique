@@ -1,17 +1,25 @@
 import { ObjectId } from "mongodb";
 import { accountsColl } from "./mongodb";
 import { redisClient } from "./redis";
-import type { ClinicInformation } from "./types";
+import type { ClinicInformation, PatientInformation } from "./types";
 
-export const grabSession = async (USID: string | undefined) => {
+export const grabSession = async (USID: string | undefined): Promise<(PatientInformation | ClinicInformation) | null> => {
     if (!USID) return null;
     const redSess = await redisClient.get(USID);
     if (!redSess) return null;
     const isVerified = redSess.substring(0, 2) != "X#";
     const accId = redSess.substring(isVerified ? 0 : 2);
-    const account:ClinicInformation | null = await accountsColl.findOne( { _id: new ObjectId(accId) } ) as ClinicInformation | null;
-    if (!account) return null;
-    return { isVerified, clinic_name: account.clinic_name, doctor_name: account.doctor_name, clinic_spec: account.clinic_spec };
+
+    const accDoc = await accountsColl.findOne( { _id: new ObjectId(accId) } ) as any;
+    if (!accDoc) return null;
+    accDoc._id = (accDoc._id as ObjectId).toString();
+    accDoc.reg_password = null;
+
+    let account:PatientInformation | ClinicInformation;
+    if (accDoc.type == "clinic") account = accDoc as ClinicInformation;
+    else account = accDoc as PatientInformation;
+    
+    return account;
 }
 
 export const deleteSession = async (USID: string | undefined) => {

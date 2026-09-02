@@ -4,7 +4,7 @@
 	let { data }: PageProps = $props();
 </script>
 
-<header class="flex items-stretch overflow-hidden border border-base-300 bg-base-100 shadow-sm">
+<header class="flex items-stretch overflow-hidden border border-base-300 shadow-sm">
 	<!-- ID-badge spine -->
 	<div class="w-1.5 shrink-0 bg-primary" aria-hidden="true"></div>
 
@@ -45,7 +45,7 @@
 
 		<!-- Status -->
 		<div class="flex flex-wrap items-center gap-2 sm:gap-3">
-			{#if !data.isVerified}
+			{#if !data.verified}
 				<div
 					class="badge shrink-0 gap-1.5 badge-outline px-3 py-3 text-xs font-semibold badge-warning sm:text-sm"
 				>
@@ -70,7 +70,7 @@
 	</div>
 </header>
 <main>
-	{#if !data.isVerified}
+	{#if !data.verified}
 		<img
 			src="../unverified.svg"
 			alt=""
