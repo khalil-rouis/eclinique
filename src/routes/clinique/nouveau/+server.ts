@@ -6,7 +6,7 @@ import { setupNewAccount } from "$lib/databaseman/accounts_manager.js";
 export const POST: RequestHandler = async ({ request }): Promise<Response> => {
     const provided_information:ClinicInformation = await request.json();
     
-    let firstCheck = Object.keys(provided_information).map(key => !(provided_information as any)[key] ? key : undefined).filter(x => x);
+    let firstCheck = Object.keys(provided_information).map(key => (provided_information as any)[key] == undefined ? key : undefined).filter(x => x);
     
     if (firstCheck.length > 0) {
         return error(400, JSON.stringify(firstCheck));

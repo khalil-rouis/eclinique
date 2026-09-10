@@ -11,7 +11,9 @@
 		clinic_spec: clinic_types[0],
 		reg_email: '',
 		reg_password: '',
-		phone: ''
+		phone: '',
+		verified: false,
+		type: 'clinic'
 	});
 
 	let erroneousFields: string[] = $state([]);

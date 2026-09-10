@@ -7,7 +7,9 @@
 	let patient_information: PatientInformation = $state({
 		full_name: '',
 		reg_password: '',
-		phone: ''
+		phone: '',
+		verified: false,
+		type: 'client'
 	});
 
 	let erroneousFields: string[] = $state([]);
