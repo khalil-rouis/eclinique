@@ -1,4 +1,5 @@
 import { clinic_types } from "$lib";
+import type { ObjectId } from "mongodb";
 import * as z from "zod/mini";
 
 export type PatientInformation = {
@@ -40,7 +41,8 @@ export type Appointment = {
 };
 
 export type SubscriptionPayment = {
-    _id: string;
+    _id: ObjectId | undefined;
+    clinic_id: string;
     month: string;
     amount: number;
     status: 'paid' | 'pending';

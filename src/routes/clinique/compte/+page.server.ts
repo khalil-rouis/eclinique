@@ -1,11 +1,12 @@
 import { redirect } from '@sveltejs/kit';
 import type { PageServerLoad } from './$types';
 import { ObjectId } from 'mongodb';
-import { appointmentsColl, accountsColl } from '$lib/mongodb';
+import { appointmentsColl, accountsColl, paymentsColl } from '$lib/mongodb';
 import { grabSession } from '$lib/session';
-import type { SubscriptionPayment } from '$lib/types';
+import type { ClinicInformation, SubscriptionPayment } from '$lib/types';
+import { initKonnectPayment } from '$lib/konnect';
 
-export const load: PageServerLoad = async ({ cookies }) => {
+export const load: PageServerLoad = async ({ cookies, url, fetch }) => {
 	const session = await grabSession(cookies.get('USID'));
 	if (!session || session.type != 'clinic') {
 		cookies.delete('USID', { path: '/' });
@@ -13,6 +14,26 @@ export const load: PageServerLoad = async ({ cookies }) => {
 	}
 
 	const ccid = (session as any)._id;
+	const paymentId = url.searchParams.get("paymentId");
+
+	const subscription_payments:SubscriptionPayment[] = await paymentsColl
+		.find({ clinic_id: ccid.toString() })
+		.sort({ created_at: -1 })
+		.toArray();
+
+	if (paymentId) {
+		const payment:SubscriptionPayment | undefined = subscription_payments.find(p => p._id?.toString() == paymentId);
+		if (payment && payment.status == "pending") {
+			const initPaymentKonnect = await initKonnectPayment(
+				(session as ClinicInformation).reg_email, (session as ClinicInformation).phone, 
+				(session as ClinicInformation).doctor_name, paymentId, payment.amount);
+			if (!initPaymentKonnect) return { isPayment: false };
+			const jsonRes = await initPaymentKonnect.json();
+			return { isPayment: true, ...jsonRes };
+		}
+	}
+
+	subscription_payments.forEach(x => x._id = undefined);
 
 	const rawAppointments = await appointmentsColl
 		.find({ ccid: ccid.toString() })
@@ -37,24 +58,11 @@ export const load: PageServerLoad = async ({ cookies }) => {
 		const patient = patientMap.get(String(a.clientId)) as any;
 		return {
 			id: a._id.toString(),
-			name: patient?.clinic_name ?? patient?.name ?? 'Patient inconnu',
+			name: patient?.full_name ?? patient?.doctor_name ?? 'Patient inconnu',
 			number: patient?.phone ?? 0,
 			datetime: new Date(a.timestamp).toISOString()
 		};
 	});
-
-	const subscription_payments:SubscriptionPayment[] = await paymentsColl
-	.find({ clinic_id: clinicId })
-	.sort({ created_at: -1 })
-	.toArray()
-	.map((payment) => ({
-            _id: payment._id.toString(),
-            month: payment.month,
-            amount: payment.amount,
-            status: payment.status,
-            due_at: payment.due_at ?? null,
-            paid_at: payment.paid_at ?? null
-	}));
 	
 	return { ...session, appointments, subscription_payments };
 };

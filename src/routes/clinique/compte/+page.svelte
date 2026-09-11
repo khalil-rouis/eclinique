@@ -1,15 +1,20 @@
 <script lang="ts">
 	import { clinic_types } from '$lib';
 	import AppointmentBoard from '$lib/components/AppointmentBoard.svelte';
+	import { redirect } from '@sveltejs/kit';
 	import type { PageProps } from './$types';
 
 	let { data }: PageProps = $props();
+
+	if (data.isPayment) {
+		if (data.payUrl) redirect(307, data.payUrl);
+		else redirect(307, '/');
+	}
 
 	type Page = 'rendez-vous' | 'facturation' | 'parametres';
 
 	let currentPage: Page = $state('rendez-vous');
 
-	// Clinic settings
 	let clinicName = $state(data.clinic_name);
 	let doctorName = $state(data.doctor_name ?? '');
 	let clinicPhone = $state(data.phone ?? '');
@@ -48,7 +53,6 @@
 
 			updateSuccess = true;
 
-			// Keep the header synchronized with the updated information.
 			data.clinic_name = clinicName;
 			data.doctor_name = doctorName;
 			data.phone = clinicPhone;
@@ -62,7 +66,9 @@
 	}
 
 	function formatMonth(month: string) {
-		const date = new Date(`${month}-01T00:00:00`);
+		const [year, monthNumber] = month.split('-');
+
+		const date = new Date(Number(year), Number(monthNumber) - 1, 1);
 
 		return new Intl.DateTimeFormat('fr-FR', {
 			month: 'long',
