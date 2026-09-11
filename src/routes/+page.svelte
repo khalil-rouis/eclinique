@@ -126,7 +126,7 @@
 				Connexion
 			</button>
 			<a
-				href="/patient/rendezvous"
+				href="/clinique/cherche"
 				class="rounded-full bg-primary px-5 py-2.5 text-sm font-semibold text-primary-content transition-colors hover:bg-primary/80 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
 			>
 				Prendre rendez-vous
@@ -243,7 +243,7 @@
 				style="opacity: {heroReady ? 1 : 0}; transition: opacity 0.7s ease 0.65s;"
 			>
 				<a
-					href="/patient/nouveau"
+					href="/clinique/cherche"
 					class="rounded-full bg-accent px-7 py-3.5 font-semibold text-accent-content shadow-lg transition-colors hover:bg-accent/80 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
 				>
 					Prendre rendez-vous
@@ -478,7 +478,7 @@
 			</p>
 			<div class="relative flex flex-wrap justify-center gap-4">
 				<a
-					href="/patient/rendezvous"
+					href="/clinique/cherche"
 					class="rounded-full bg-base-100 px-7 py-3.5 font-semibold text-primary transition-colors hover:bg-base-100/90 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-base-100"
 				>
 					Prendre rendez-vous
