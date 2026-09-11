@@ -6,10 +6,10 @@ import type { ClinicInformation } from '$lib/types';
 import { grabSession } from '$lib/session';
 
 export const load: PageServerLoad = async ({ cookies }) => {
-	if (!cookies.get('USID')) throw redirect(303, '/login');
+	if (!cookies.get('USID')) throw redirect(303, '/patient/bonjour');
 	const USID = cookies.get('USID');
 	const session = await grabSession(USID);
-	if (!session || !session.verified) throw redirect(303, '/login');
+	if (!session || !session.verified) throw redirect(303, '/patient/bonjour');
 
 	const clientId = (session as any)._id;
 
