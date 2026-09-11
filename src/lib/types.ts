@@ -11,6 +11,7 @@ export type PatientInformation = {
 
 export type ClinicInformation = {
     clinic_name: string;
+    clinic_address: string;
     doctor_name: string;
     clinic_spec: string;
     reg_email: string;
@@ -38,14 +39,26 @@ export type Appointment = {
 	datetime: string;
 };
 
+export type SubscriptionPayment = {
+    _id: string;
+    month: string;
+    amount: number;
+    status: 'paid' | 'pending';
+    paid_at?: string | null;
+    due_at?: string | null;
+}
+
+export const clinic_name_crit = z.string().check(z.minLength(6)).check(z.maxLength(32)).check(z.regex(/^[a-zA-ZÀ-ÿ\s]*$/));
+export const clinic_address_crit = z.string().check(z.minLength(10)).check(z.maxLength(64));
+export const doctor_name_crit = z.string().check(z.minLength(6)).check(z.maxLength(64)).check(z.regex(/^[a-zA-ZÀ-ÿ\s]*$/));
+export const clinic_spec_crit = z.enum(clinic_types);
+export const clinic_phone_crit = z.coerce.number().check(z.minimum(10000000)).check(z.maximum(99999999));
 export const ClinicInformationSchema = z.object(
     {
-        clinic_name: z.string().check(z.minLength(6)).check(z.maxLength(32)).check(z.regex(/^[a-zA-ZÀ-ÿ\s]*$/)),
-        doctor_name: z.string().check(z.minLength(6)).check(z.maxLength(64)).check(z.regex(/^[a-zA-ZÀ-ÿ\s]*$/)),
-        clinic_spec: z.enum(clinic_types),
+        clinic_name: clinic_name_crit, clinic_address: clinic_address_crit, doctor_name: doctor_name_crit, clinic_spec: clinic_spec_crit,
         reg_email: z.email(),
         reg_password: z.string().check(z.minLength(8)).check(z.maxLength(64)),
-        phone: z.coerce.number().check(z.minimum(10000000)).check(z.maximum(99999999))
+        phone: clinic_phone_crit
     }
 );
 

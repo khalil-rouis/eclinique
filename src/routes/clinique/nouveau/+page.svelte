@@ -7,6 +7,7 @@
 
 	let clinic_information: ClinicInformation = $state({
 		clinic_name: '',
+		clinic_address: '',
 		doctor_name: '',
 		clinic_spec: clinic_types[0],
 		reg_email: '',
@@ -113,6 +114,19 @@
 								<option value={type}>{type}</option>
 							{/each}
 						</select>
+					</div>
+					<div class="flex flex-col gap-1">
+						<label class="fieldset-label" for="doctor_name">Adresse de la clinique</label>
+						<input
+							id="clinic_address"
+							class="input w-full outline-none {erroneousFields.indexOf('clinic_address') != -1 ||
+							erroneousFields[0] == '*'
+								? 'border-red-700'
+								: ''}"
+							type="text"
+							placeholder="Au moins 10 caractères"
+							bind:value={clinic_information.clinic_address}
+						/>
 					</div>
 				</fieldset>
 				<div class="divider hidden divider-horizontal sm:flex"></div>

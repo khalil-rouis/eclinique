@@ -3,6 +3,7 @@ import type { PageServerLoad } from './$types';
 import { ObjectId } from 'mongodb';
 import { appointmentsColl, accountsColl } from '$lib/mongodb';
 import { grabSession } from '$lib/session';
+import type { SubscriptionPayment } from '$lib/types';
 
 export const load: PageServerLoad = async ({ cookies }) => {
 	const session = await grabSession(cookies.get('USID'));
@@ -42,8 +43,18 @@ export const load: PageServerLoad = async ({ cookies }) => {
 		};
 	});
 
-	return {
-		...session,
-		appointments
-	};
+	const subscription_payments:SubscriptionPayment[] = await paymentsColl
+	.find({ clinic_id: clinicId })
+	.sort({ created_at: -1 })
+	.toArray()
+	.map((payment) => ({
+            _id: payment._id.toString(),
+            month: payment.month,
+            amount: payment.amount,
+            status: payment.status,
+            due_at: payment.due_at ?? null,
+            paid_at: payment.paid_at ?? null
+	}));
+	
+	return { ...session, appointments, subscription_payments };
 };
