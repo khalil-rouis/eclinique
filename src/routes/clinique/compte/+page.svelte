@@ -77,6 +77,6 @@
 			class="absolute inset-0 top-0 bottom-0 m-auto h-48 w-48 opacity-40 invert md:h-72 md:w-72"
 		/>
 	{:else}
-		<AppointmentBoard />
+		<AppointmentBoard initialAppointments={data.appointments} />
 	{/if}
 </main>

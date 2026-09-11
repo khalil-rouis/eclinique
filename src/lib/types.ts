@@ -32,10 +32,10 @@ export type PatientLoginInformation = {
 }
 
 export type Appointment = {
-    id: number;
-    name: string;
-    number: number;
-    datetime: string;
+	id: string;
+	name: string;
+	number: number;
+	datetime: string;
 };
 
 export const ClinicInformationSchema = z.object(
@@ -71,3 +71,9 @@ export const PatientLoginInformationSchema = z.object(
         password: z.string().check(z.minLength(8)).check(z.maxLength(64))
     }
 )
+
+export interface AppointmentDoc {
+	clientId: string;
+	ccid: string;
+	timestamp: Date;
+}

@@ -12,9 +12,9 @@ export const load: PageServerLoad = async ({ url, cookies, request }) => {
     if (!session || !session.verified /*|| session.type != "client" */) return { error: "Unverified acc!" };
     const ccid = url.searchParams.get("ccid");
     if (!ccid) return { error: "Bad ccid!" };
-    const clinicInfo = (await accountsColl.findOne({ "_id": new ObjectId(ccid.toString()) }) as unknown) as ClinicInformation;
+    const clinicInfo = (await accountsColl.findOne({ "_id": new ObjectId(ccid.toString()) }) as unknown) as ClinicInformation & { _id: ObjectId | string};
     if (!clinicInfo || clinicInfo.type != "clinic") return { error: "Bad ccid!" };
     clinicInfo._id = (clinicInfo._id as ObjectId).toString();
-
+    
     return { ...clinicInfo };
 }

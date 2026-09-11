@@ -1,15 +1,16 @@
 import { Collection, MongoClient } from 'mongodb'
 import  { MONGO_URL, MONGO_DB } from '$env/static/private';
+import type { AppointmentDoc } from './types';
 
 const client = new MongoClient(MONGO_URL);
-export let accountsColl: Collection<Document>, appointmentsColl: Collection<Document>;
+export let accountsColl: Collection<Document>, appointmentsColl: Collection<AppointmentDoc>;
 
 export const connectMongo = async () => {
     await client.connect();
     console.log('Connected successfully to Mongo DB');
     const db = client.db(MONGO_DB);
     accountsColl = db.collection("comptes");
-    appointmentsColl = db.collection("rendez_vous");
+    appointmentsColl = db.collection<AppointmentDoc>("rendez_vous");
     console.log('Defined Mongo DB collections successfully');
 
     // Using sparse indexes because there are 2 types of accounts and one has reg_email and the other doesn't.

@@ -1,14 +1,9 @@
 <script lang="ts">
 	import AppointmentCard from './AppointmentCard.svelte';
 	import type { Appointment } from '$lib/types';
-	let appointments = $state<Appointment[]>([
-		{ id: 1, name: 'Sara Ben Ali', number: 1042, datetime: '2026-08-29T10:00:00' },
-		{ id: 2, name: 'Omar Trabelsi', number: 1043, datetime: '2026-08-29T14:30:00' },
-		{ id: 3, name: 'Yasmine Karray', number: 1044, datetime: '2026-08-30T18:15:00' },
-		{ id: 4, name: 'Karim Jendoubi', number: 1045, datetime: '2026-08-31T09:00:00' },
-		{ id: 5, name: 'Leila Mansour', number: 1046, datetime: '2026-08-31T20:00:00' },
-		{ id: 6, name: 'Ahmed Souissi', number: 1047, datetime: '2026-09-03T11:00:00' }
-	]);
+	let { initialAppointments }: { initialAppointments: Appointment[] } = $props();
+
+	let appointments = $state<Appointment[]>(initialAppointments);
 
 	const rowDefs = [
 		{
@@ -117,7 +112,7 @@
 			}));
 	});
 
-	async function handleReschedule(id: number, newDatetime: string) {
+	async function handleReschedule(id: string, newDatetime: string) {
 		const appt = appointments.find((a) => a.id === id);
 		if (!appt) return;
 		const previous = appt.datetime;
@@ -141,11 +136,11 @@
 		}
 	}
 
-	async function handleCancelAppointment(id: number) {
+	async function handleCancelAppointment(id: string) {
 		const index = appointments.findIndex((a) => a.id === id);
 		if (index === -1) return;
 		const [removed] = appointments.splice(index, 1);
-		appointments = [...appointments]; // déclenche la réactivité
+		appointments = [...appointments];
 
 		saveStatus = 'saving';
 		try {

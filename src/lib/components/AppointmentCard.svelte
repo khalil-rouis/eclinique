@@ -46,7 +46,7 @@
 			<div class="mt-0.5 flex items-center gap-1.5 text-sm text-base-content/60 sm:text-xs">
 				<span>{date}</span>
 				<span class="text-base-content/30">•</span>
-				<span>N° {number}</span>
+				<span>{number}</span>
 			</div>
 		</div>
 
