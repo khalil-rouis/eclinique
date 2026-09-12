@@ -30,8 +30,8 @@ export const POST: RequestHandler = async ({ request, cookies }) => {
 	if (!cookies.get('USID')) throw error(401, 'Bad session!');
 	const USID = cookies.get('USID');
 	const session = await grabSession(USID);
-	if (!session || !session.verified /* || session.type != "client" */) {
-		throw error(401, 'Unverified acc!');
+	if (!session || !session.verified) {
+		throw error(401, 'Compte non vérifié!');
 	}
 
 	let body: { ccid?: string };
@@ -45,6 +45,9 @@ export const POST: RequestHandler = async ({ request, cookies }) => {
 	if (!ccid) {
 		throw error(400, 'Paramètre ccid manquant');
 	}
+
+	const searchForRepetitives = await appointmentsColl.findOne( { ccid, clientId: (session as any)._id} );
+	if (searchForRepetitives) throw error(500, "Vous avez déjà un rendez-vous fixé avec cette clinique!");
 
 	// Find the clinic's latest appointment to schedule an hour after it
 	const latest = await appointmentsColl.findOne(

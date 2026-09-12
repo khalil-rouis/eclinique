@@ -59,8 +59,9 @@
 
 	async function confirmNewRendezVous() {
 		submitting = true;
+		let res;
 		try {
-			const res = await fetch('/clinique/rendezvous/nouveau', {
+			res = await fetch('/clinique/rendezvous/nouveau', {
 				method: 'POST',
 				headers: { 'Content-Type': 'application/json' },
 				body: JSON.stringify({ ccid })
@@ -76,9 +77,13 @@
 				message: `Rendez-vous pris pour le ${formatDate(created.timestamp)} à ${formatTime(created.timestamp)}.`
 			};
 		} catch (e) {
+			const errorMessage = await res?.json();
+
 			notification = {
 				type: 'error',
-				message: 'Échec de la prise de rendez-vous. Veuillez réessayer.'
+				message: errorMessage
+					? errorMessage.message
+					: 'Échec de la prise de rendez-vous. Veuillez réessayer.'
 			};
 		} finally {
 			submitting = false;

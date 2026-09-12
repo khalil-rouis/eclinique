@@ -7,7 +7,7 @@ import { grabSession } from '$lib/session';
 export const DELETE: RequestHandler = async ({ params, cookies }) => {
 	if (!cookies.get('USID')) throw error(401, 'Bad session!');
 	const session = await grabSession(cookies.get('USID'));
-	if (!session || !session.verified) throw error(401, 'Unverified acc!');
+	if (!session || !session.verified) throw error(401, 'Compte non vérifié!');
 
 	if (!ObjectId.isValid(params.id)) throw error(400, 'ID invalide');
 

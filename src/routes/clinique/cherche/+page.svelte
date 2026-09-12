@@ -122,6 +122,9 @@
 							{#if clinic.doctorName}
 								<p class="mt-0.5 text-xs text-base-content/50">Dr. {clinic.doctorName}</p>
 							{/if}
+							{#if clinic.address}
+								<p class="mt-0.5 text-xs text-base-content">📍 {clinic.address}</p>
+							{/if}
 						</div>
 
 						<div class="mt-4 flex items-center gap-1 text-sm font-medium text-primary">
