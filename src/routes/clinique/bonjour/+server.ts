@@ -30,6 +30,6 @@ export const POST: RequestHandler = async ({ request, cookies }): Promise<Respon
     const newUSID = generateSecureHex32();
     redisClient.set(newUSID, (!(user as any).verified ? "X#" : "") + user._id.toString(), { expiration: { type: 'EX', value: 60 * 60 * 24 } });
     redisClient.set(user._id.toString(), String((prevSess != null ? Number(prevSess) : 0) + 1), { expiration: { type: 'EX', value: 60 * 60 * 24 } });
-    cookies.set("USID", newUSID, { path: "/", secure: true, maxAge: 60 * 60 * 24 })
+    cookies.set("USID", newUSID, { path: "/", secure: true })
     return redirect(303, "/clinique/compte");
 };

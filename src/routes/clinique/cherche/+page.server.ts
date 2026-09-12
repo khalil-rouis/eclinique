@@ -22,7 +22,7 @@ export const load: PageServerLoad = async ({ url, cookies }) => {
 
 	const [results, specialties, session] = await Promise.all([
 		accountsColl
-			.find(filter, { projection: { clinic_name: 1, clinic_spec: 1, doctor_name: 1, clinic_address: 1 } })
+			.find(filter, { projection: { clinic_name: 1, clinic_spec: 1, doctor_name: 1, clinic_address: 1, cover_photo_url: 1 } })
 			.sort({ clinic_name: 1 })
 			.toArray(),
 		accountsColl.distinct('clinic_spec', { type: 'clinic', verified: true }),
@@ -37,7 +37,8 @@ export const load: PageServerLoad = async ({ url, cookies }) => {
 			name: (c as any).clinic_name,
 			spec: (c as any).clinic_spec,
 			doctorName: (c as any).doctor_name,
-			address: (c as any).clinic_address
+			address: (c as any).clinic_address,
+			cover_photo_url: (c as any).cover_photo_url
 		})),
 		specialties: specialties.filter(Boolean).sort(),
 		query: q,

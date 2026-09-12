@@ -11,7 +11,7 @@
 		else redirect(307, '/');
 	}
 
-	type Page = 'rendez-vous' | 'facturation' | 'parametres';
+	type Page = 'rendez-vous' | 'facturation' | 'parametres' | 'couverture';
 
 	let currentPage: Page = $state('rendez-vous');
 
@@ -24,6 +24,117 @@
 	let updating = $state(false);
 	let updateError = $state('');
 	let updateSuccess = $state(false);
+
+	// --- Cover photo state ---
+	let coverPhotoUrl = $state(data.cover_photo_url ?? '');
+	let coverPreview = $state<string | null>(null);
+	let coverFile = $state<File | null>(null);
+	let coverInput: HTMLInputElement | undefined = $state();
+	let dragActive = $state(false);
+
+	let uploadingCover = $state(false);
+	let coverError = $state('');
+	let coverSuccess = $state(false);
+
+	function onCoverFileChosen(file: File | null) {
+		coverError = '';
+		coverSuccess = false;
+
+		if (!file) return;
+
+		if (!file.type.startsWith('image/')) {
+			coverError = 'Veuillez sélectionner un fichier image.';
+			return;
+		}
+
+		if (file.size > 8 * 1024 * 1024) {
+			coverError = "L'image ne doit pas dépasser 8 Mo.";
+			return;
+		}
+
+		coverFile = file;
+		coverPreview = URL.createObjectURL(file);
+	}
+
+	function handleCoverInputChange(event: Event) {
+		const target = event.target as HTMLInputElement;
+		onCoverFileChosen(target.files?.[0] ?? null);
+	}
+
+	function handleDrop(event: DragEvent) {
+		event.preventDefault();
+		dragActive = false;
+		onCoverFileChosen(event.dataTransfer?.files?.[0] ?? null);
+	}
+
+	function clearCoverSelection() {
+		coverFile = null;
+		coverPreview = null;
+		coverError = '';
+		coverSuccess = false;
+		if (coverInput) coverInput.value = '';
+	}
+
+	async function uploadCoverPhoto() {
+		if (!coverFile) return;
+
+		uploadingCover = true;
+		coverError = '';
+		coverSuccess = false;
+
+		try {
+			const formData = new FormData();
+			formData.append('cover_photo', coverFile);
+
+			const response = await fetch('/clinique/couverture', {
+				method: 'PATCH',
+				body: formData
+			});
+
+			const result = await response.json();
+
+			if (!response.ok) {
+				throw new Error(result.message ?? 'Impossible de mettre à jour la photo de couverture.');
+			}
+
+			coverPhotoUrl = result.cover_photo_url ?? coverPreview ?? coverPhotoUrl;
+			data.cover_photo_url = coverPhotoUrl;
+			coverSuccess = true;
+			coverFile = null;
+			coverPreview = null;
+			if (coverInput) coverInput.value = '';
+		} catch (error) {
+			coverError = error instanceof Error ? error.message : 'Une erreur est survenue.';
+		} finally {
+			uploadingCover = false;
+		}
+	}
+
+	async function removeCoverPhoto() {
+		uploadingCover = true;
+		coverError = '';
+		coverSuccess = false;
+
+		try {
+			const response = await fetch('/clinique/couverture', {
+				method: 'DELETE'
+			});
+
+			if (!response.ok) {
+				const result = await response.json().catch(() => ({}));
+				throw new Error(result.message ?? 'Impossible de supprimer la photo de couverture.');
+			}
+
+			coverPhotoUrl = '';
+			data.cover_photo_url = '';
+			clearCoverSelection();
+			coverSuccess = true;
+		} catch (error) {
+			coverError = error instanceof Error ? error.message : 'Une erreur est survenue.';
+		} finally {
+			uploadingCover = false;
+		}
+	}
 
 	async function updateClinic() {
 		updating = true;
@@ -409,6 +520,182 @@
 					</div>
 				</form>
 			</section>
+		{:else if currentPage === 'couverture'}
+			<section class="mx-auto max-w-3xl p-4 sm:p-6">
+				<div class="mb-6">
+					<h2 class="text-xl font-bold sm:text-2xl">Photo de couverture</h2>
+
+					<p class="mt-1 text-sm text-base-content/60">
+						Cette image apparaît en haut du profil public de votre clinique.
+					</p>
+				</div>
+
+				<div class="space-y-5 rounded-box border border-base-300 bg-base-100 p-5 shadow-sm sm:p-6">
+					<!-- Current / preview image -->
+					<div
+						class="relative flex aspect-[16/7] w-full items-center justify-center overflow-hidden rounded-box border border-base-300 bg-base-200 sm:aspect-[21/7]"
+					>
+						{#if coverPreview}
+							<img
+								src={coverPreview}
+								alt="Aperçu de la photo de couverture"
+								class="h-full w-full object-cover"
+							/>
+						{:else if coverPhotoUrl}
+							<img
+								src={coverPhotoUrl}
+								alt="Photo de couverture actuelle"
+								class="h-full w-full object-cover"
+							/>
+						{:else}
+							<div class="flex flex-col items-center gap-2 text-base-content/40">
+								<svg class="h-10 w-10" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+									<rect
+										x="3"
+										y="4"
+										width="18"
+										height="16"
+										rx="2"
+										stroke="currentColor"
+										stroke-width="1.6"
+									/>
+									<path
+										d="M3 16l5-5 4 4 3-3 6 6"
+										stroke="currentColor"
+										stroke-width="1.6"
+										stroke-linecap="round"
+										stroke-linejoin="round"
+									/>
+									<circle cx="8" cy="9" r="1.4" stroke="currentColor" stroke-width="1.4" />
+								</svg>
+								<span class="text-xs font-medium sm:text-sm"> Aucune photo de couverture </span>
+							</div>
+						{/if}
+					</div>
+
+					<!-- Dropzone / picker -->
+					<label
+						for="cover-photo-input"
+						class="flex cursor-pointer flex-col {dragActive
+							? 'bg-primary/5'
+							: ''} items-center justify-center gap-2 rounded-box border-2 border-dashed p-6 text-center transition-colors sm:p-8"
+						class:border-primary={dragActive}
+						class:border-base-300={!dragActive}
+						ondragover={(event) => {
+							event.preventDefault();
+							dragActive = true;
+						}}
+						ondragleave={() => (dragActive = false)}
+						ondrop={handleDrop}
+					>
+						<svg
+							class="h-8 w-8 text-base-content/40"
+							viewBox="0 0 24 24"
+							fill="none"
+							aria-hidden="true"
+						>
+							<path
+								d="M12 16V4m0 0-4 4m4-4 4 4"
+								stroke="currentColor"
+								stroke-width="1.7"
+								stroke-linecap="round"
+								stroke-linejoin="round"
+							/>
+							<path
+								d="M4 16v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"
+								stroke="currentColor"
+								stroke-width="1.7"
+								stroke-linecap="round"
+								stroke-linejoin="round"
+							/>
+						</svg>
+
+						<span class="text-sm font-semibold text-base-content sm:text-base">
+							Touchez pour choisir une image
+						</span>
+
+						<span class="text-xs text-base-content/50">
+							ou glissez-déposez ici (JPG, PNG — 8 Mo max)
+						</span>
+
+						<input
+							id="cover-photo-input"
+							bind:this={coverInput}
+							type="file"
+							accept="image/*"
+							class="hidden"
+							onchange={handleCoverInputChange}
+						/>
+					</label>
+
+					{#if coverError}
+						<div class="alert alert-error">
+							<svg
+								xmlns="http://www.w3.org/2000/svg"
+								class="h-6 w-6 shrink-0 stroke-current"
+								fill="none"
+								viewBox="0 0 24 24"
+							>
+								<path
+									stroke-linecap="round"
+									stroke-linejoin="round"
+									stroke-width="2"
+									d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"
+								/>
+							</svg>
+
+							<span>{coverError}</span>
+						</div>
+					{/if}
+
+					{#if coverSuccess}
+						<div class="alert alert-success">
+							<svg
+								xmlns="http://www.w3.org/2000/svg"
+								class="h-6 w-6 shrink-0 stroke-current"
+								fill="none"
+								viewBox="0 0 24 24"
+							>
+								<path
+									stroke-linecap="round"
+									stroke-linejoin="round"
+									stroke-width="2"
+									d="M5 13l4 4L19 7"
+								/>
+							</svg>
+
+							<span> Photo de couverture mise à jour. </span>
+						</div>
+					{/if}
+
+					<div
+						class="flex flex-col-reverse gap-2 pt-2 sm:flex-row sm:items-center sm:justify-between"
+					>
+						<button
+							type="button"
+							class="btn btn-ghost text-error btn-sm sm:btn-md"
+							disabled={uploadingCover || (!coverPhotoUrl && !coverPreview)}
+							onclick={() => (coverPreview ? clearCoverSelection() : removeCoverPhoto())}
+						>
+							{coverPreview ? 'Annuler la sélection' : 'Supprimer la photo'}
+						</button>
+
+						<button
+							type="button"
+							class="btn w-full btn-primary sm:w-auto"
+							disabled={!coverFile || uploadingCover}
+							onclick={uploadCoverPhoto}
+						>
+							{#if uploadingCover}
+								<span class="loading loading-sm loading-spinner"></span>
+								Enregistrement...
+							{:else}
+								Enregistrer la photo
+							{/if}
+						</button>
+					</div>
+				</div>
+			</section>
 		{/if}
 	</main>
 
@@ -418,14 +705,14 @@
 		aria-label="Navigation principale"
 	>
 		<div
-			class="flex items-center gap-1 rounded-2xl border border-base-300 bg-base-100/95 p-1.5 shadow-xl shadow-base-content/10 backdrop-blur-xl"
+			class="flex items-center gap-1 overflow-x-auto rounded-2xl border border-base-300 bg-base-100/95 p-1.5 shadow-xl shadow-base-content/10 backdrop-blur-xl"
 		>
 			<!-- Rendez-vous -->
 			<button
 				type="button"
 				class:btn-primary={currentPage === 'rendez-vous'}
 				class:btn-ghost={currentPage !== 'rendez-vous'}
-				class="btn h-12 min-h-12 gap-2 rounded-xl px-3 sm:px-5"
+				class="btn h-12 min-h-12 shrink-0 gap-2 rounded-xl px-3 sm:px-5"
 				onclick={() => (currentPage = 'rendez-vous')}
 				aria-current={currentPage === 'rendez-vous' ? 'page' : undefined}
 			>
@@ -461,7 +748,7 @@
 				type="button"
 				class:btn-primary={currentPage === 'facturation'}
 				class:btn-ghost={currentPage !== 'facturation'}
-				class="btn h-12 min-h-12 gap-2 rounded-xl px-3 sm:px-5"
+				class="btn h-12 min-h-12 shrink-0 gap-2 rounded-xl px-3 sm:px-5"
 				onclick={() => (currentPage = 'facturation')}
 				aria-current={currentPage === 'facturation' ? 'page' : undefined}
 			>
@@ -491,7 +778,7 @@
 				type="button"
 				class:btn-primary={currentPage === 'parametres'}
 				class:btn-ghost={currentPage !== 'parametres'}
-				class="btn h-12 min-h-12 gap-2 rounded-xl px-3 sm:px-5"
+				class="btn h-12 min-h-12 shrink-0 gap-2 rounded-xl px-3 sm:px-5"
 				onclick={() => (currentPage = 'parametres')}
 				aria-current={currentPage === 'parametres' ? 'page' : undefined}
 			>
@@ -510,6 +797,41 @@
 				</svg>
 
 				<span class="hidden sm:inline"> Paramètres </span>
+			</button>
+
+			<!-- Divider before the right-aligned cover photo action -->
+			<div class="mx-1 h-8 w-px shrink-0 bg-base-300" aria-hidden="true"></div>
+
+			<!-- Photo de couverture -->
+			<button
+				type="button"
+				class:btn-primary={currentPage === 'couverture'}
+				class:btn-ghost={currentPage !== 'couverture'}
+				class="btn h-12 min-h-12 shrink-0 gap-2 rounded-xl px-3 sm:px-5"
+				onclick={() => (currentPage = 'couverture')}
+				aria-current={currentPage === 'couverture' ? 'page' : undefined}
+			>
+				<svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+					<rect
+						x="3"
+						y="4"
+						width="18"
+						height="16"
+						rx="2"
+						stroke="currentColor"
+						stroke-width="1.7"
+					/>
+					<path
+						d="M3 16l5-5 4 4 3-3 6 6"
+						stroke="currentColor"
+						stroke-width="1.7"
+						stroke-linecap="round"
+						stroke-linejoin="round"
+					/>
+					<circle cx="8" cy="9" r="1.3" stroke="currentColor" stroke-width="1.3" />
+				</svg>
+
+				<span class="hidden sm:inline"> Couverture </span>
 			</button>
 		</div>
 	</nav>

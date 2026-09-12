@@ -108,30 +108,68 @@
 					<button
 						type="button"
 						onclick={() => handleClinicClick(clinic.ccid)}
-						class="group flex flex-col justify-between rounded-2xl bg-base-100 p-5 text-left shadow-sm ring-1 ring-base-content/10 transition hover:-translate-y-0.5 hover:shadow-md hover:ring-primary/30"
+						class="group flex flex-col overflow-hidden rounded-2xl bg-base-100 text-left shadow-sm ring-1 ring-base-content/10 transition hover:-translate-y-0.5 hover:shadow-md hover:ring-primary/30"
 					>
-						<div>
-							<h2 class="mr-2 inline text-base leading-snug font-semibold">{clinic.name}</h2>
-							{#if clinic.spec}
-								<span
-									class="badge inline badge-sm opacity-80 transition badge-primary group-hover:opacity-100"
+						<!-- Cover photo -->
+						<div class="relative aspect-[16/7] w-full shrink-0 overflow-hidden bg-base-200">
+							{#if clinic.cover_photo_url}
+								<img
+									src={clinic.cover_photo_url}
+									alt=""
+									loading="lazy"
+									class="h-full w-full object-cover transition duration-300 group-hover:scale-[1.03]"
+								/>
+							{:else}
+								<div
+									class="flex h-full w-full items-center justify-center bg-gradient-to-br from-primary/10 to-primary/5 text-primary/30"
 								>
-									{clinic.spec}
-								</span>
-							{/if}
-							{#if clinic.doctorName}
-								<p class="mt-0.5 text-xs text-base-content/50">Dr. {clinic.doctorName}</p>
-							{/if}
-							{#if clinic.address}
-								<p class="mt-0.5 text-xs text-base-content">📍 {clinic.address}</p>
+									<svg class="h-8 w-8" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+										<rect
+											x="3"
+											y="4"
+											width="18"
+											height="16"
+											rx="2"
+											stroke="currentColor"
+											stroke-width="1.6"
+										/>
+										<path
+											d="M3 16l5-5 4 4 3-3 6 6"
+											stroke="currentColor"
+											stroke-width="1.6"
+											stroke-linecap="round"
+											stroke-linejoin="round"
+										/>
+										<circle cx="8" cy="9" r="1.3" stroke="currentColor" stroke-width="1.3" />
+									</svg>
+								</div>
 							{/if}
 						</div>
 
-						<div class="mt-4 flex items-center gap-1 text-sm font-medium text-primary">
-							Prendre rendez-vous
-							<span class="transition-transform group-hover:translate-x-0.5" aria-hidden="true"
-								>→</span
-							>
+						<div class="flex flex-1 flex-col justify-between p-5">
+							<div>
+								<h2 class="mr-2 inline text-base leading-snug font-semibold">{clinic.name}</h2>
+								{#if clinic.spec}
+									<span
+										class="badge inline badge-sm opacity-80 transition badge-primary group-hover:opacity-100"
+									>
+										{clinic.spec}
+									</span>
+								{/if}
+								{#if clinic.doctorName}
+									<p class="mt-0.5 text-xs text-base-content/50">Dr. {clinic.doctorName}</p>
+								{/if}
+								{#if clinic.address}
+									<p class="mt-0.5 text-xs text-base-content">📍 {clinic.address}</p>
+								{/if}
+							</div>
+
+							<div class="mt-4 flex items-center gap-1 text-sm font-medium text-primary">
+								Prendre rendez-vous
+								<span class="transition-transform group-hover:translate-x-0.5" aria-hidden="true"
+									>→</span
+								>
+							</div>
 						</div>
 					</button>
 				{/each}
