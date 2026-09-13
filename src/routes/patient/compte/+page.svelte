@@ -17,24 +17,32 @@
 		{:else}
 			<div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
 				{#each data.cliniques as clinique}
-					<a
-						href={`/clinique/rendezvous?ccid=${clinique.ccid}`}
-						class="group relative flex flex-col justify-between rounded-2xl bg-base-100 p-5 shadow-sm ring-1 ring-base-content/5 transition hover:-translate-y-0.5 hover:shadow-md hover:ring-primary/30"
+					<div
+						class="group relative flex items-end justify-between rounded-2xl bg-base-100 p-5 shadow-sm ring-1 ring-base-content/5 transition hover:-translate-y-0.5 hover:shadow-md hover:ring-primary/30"
 					>
-						<div>
-							<h2 class="text-base leading-snug font-semibold">{clinique.name}</h2>
-							{#if clinique.spec}
-								<p class="mt-0.5 text-xs text-base-content/50 italic">{clinique.spec}</p>
-							{/if}
-						</div>
-
-						<div class="mt-4 flex items-center gap-1 text-sm font-medium text-primary">
-							Voir le rendez-vous
-							<span class="transition-transform group-hover:translate-x-0.5" aria-hidden="true"
-								>→</span
+						<a class="flex flex-col" href={`/clinique/rendezvous?ccid=${clinique.ccid}`}>
+							<div>
+								<h2 class="text-base leading-snug font-semibold">{clinique.name}</h2>
+								{#if clinique.spec}
+									<p class="mt-0.5 text-xs text-base-content/50 italic">{clinique.spec}</p>
+								{/if}
+							</div>
+							<div class="mt-4 flex items-center gap-1 text-sm font-medium text-primary">
+								Voir le rendez-vous
+								<span class="transition-transform group-hover:translate-x-0.5" aria-hidden="true"
+									>→</span
+								>
+							</div>
+						</a>
+						<form method="POST">
+							<input name="ccid" value={clinique.ccid} hidden type="text" />
+							<button
+								type="submit"
+								class="w-6 rounded-sm bg-red-700 p-1 opacity-80 hover:cursor-pointer hover:opacity-100"
+								><img class="w-full invert" src="../del.svg" alt="" /></button
 							>
-						</div>
-					</a>
+						</form>
+					</div>
 				{/each}
 			</div>
 		{/if}

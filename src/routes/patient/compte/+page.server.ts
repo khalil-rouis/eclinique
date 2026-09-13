@@ -1,4 +1,4 @@
-import { redirect } from '@sveltejs/kit';
+import { fail, redirect, type Actions } from '@sveltejs/kit';
 import type { PageServerLoad } from './$types';
 import { ObjectId } from 'mongodb';
 import { appointmentsColl, accountsColl } from '$lib/mongodb';
@@ -50,3 +50,17 @@ export const load: PageServerLoad = async ({ cookies }) => {
 		})
 	};
 };
+
+export const actions = {
+	default: async (event) => {
+		const usid = event.cookies.get("USID");
+		const session = await grabSession(usid);
+		if (!session || !session.verified) return fail(400, "Session invalide ou compte non vérifié!");
+		const sessionId = (session as any)._id;
+		const form = await event.request.formData();
+		const ccid = form.get("ccid");
+		if (!ccid) return fail(400, "Session invalide ou compte non vérifié!");
+		const delRes = await appointmentsColl.deleteOne({ clientId: sessionId, ccid: ccid });
+		return delRes.acknowledged ? { success: true } : fail(400, "Session invalide ou compte non vérifié!");
+	}
+} satisfies Actions;

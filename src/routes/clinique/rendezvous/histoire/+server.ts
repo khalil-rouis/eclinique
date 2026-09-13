@@ -7,8 +7,8 @@ export const GET: RequestHandler = async ({ url, cookies }) => {
 	if (!cookies.get('USID')) throw error(401, 'Bad session!');
 	const USID = cookies.get('USID');
 	const session = await grabSession(USID);
-	if (!session || !session.verified /* || session.type != "client" */) {
-		throw error(401, 'Unverified acc!');
+	if (!session || !session.verified) {
+		throw error(401, 'Compte non verifié!');
 	}
 
 	const ccid = url.searchParams.get('ccid');
