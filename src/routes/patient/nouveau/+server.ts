@@ -1,4 +1,4 @@
-import { error, json, redirect } from "@sveltejs/kit";
+import { error, json } from "@sveltejs/kit";
 import type { RequestHandler } from "./$types.js";
 import { PatientInformationSchema, type PatientInformation } from "$lib/types.js";
 import { setupNewPatientAccount } from "$lib/databaseman/accounts_manager.js";

@@ -1,7 +1,8 @@
-import { error, redirect } from "@sveltejs/kit";
+import { error, json } from "@sveltejs/kit";
 import type { RequestHandler } from "./$types.js";
 import { ClinicInformationSchema, type ClinicInformation } from "$lib/types.js";
 import { setupNewAccount } from "$lib/databaseman/accounts_manager.js";
+import { sendSMSVerificationMsg } from "$lib/sms/sms_verification.js";
 
 export const POST: RequestHandler = async ({ request }): Promise<Response> => {
     const provided_information:ClinicInformation = await request.json();
@@ -20,7 +21,11 @@ export const POST: RequestHandler = async ({ request }): Promise<Response> => {
     if (typeof newUserId != "string" && newUserId.error) {
         return error(409, newUserId.dup_field);
     }
-    // setup phone verification with an id
-
-    return redirect(302, "/..");
+    
+    const smsVerif = await sendSMSVerificationMsg(newUserId);
+    if (!smsVerif) {
+        return error(400, "Impossible d'envoyer le SMS");
+    }
+    
+    return json(JSON.stringify({ success: true }));
 }

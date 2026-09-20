@@ -1,9 +1,12 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
 	import { clinic_types } from '$lib';
-	import type { ClinicInformation } from '$lib/types';
+	import type { ClinicInformation, LoginInformation } from '$lib/types';
 	let inputContent: HTMLDivElement;
 	let loadingAnimation: HTMLImageElement;
+	let NextBTNText: string = $state('Vérification du numéro de téléphone');
+	let otpElement: HTMLLabelElement;
+	let verificationCodeVal: string = $state('');
 
 	let clinic_information: ClinicInformation = $state({
 		clinic_name: '',
@@ -18,9 +21,29 @@
 	});
 
 	let erroneousFields: string[] = $state([]);
+	let otpClass = $derived(
+		erroneousFields.indexOf('verification_code') != -1 ? 'outline-red-500' : ''
+	);
 
 	const setupRegistration = async () => {
 		erroneousFields = [];
+
+		if (NextBTNText == 'Vérifier le code') {
+			const checkCode = await fetch('/api/verification?code=' + verificationCodeVal, {
+				credentials: 'include'
+			});
+			if (checkCode.status != 200) {
+				erroneousFields = ['verification_code'];
+			} else {
+				goto('/clinique/bonjour', {
+					state: {
+						phone: clinic_information.phone,
+						reg_password: clinic_information.reg_password
+					}
+				});
+			}
+			return;
+		}
 
 		loadingAnimation.classList.remove('opacity-0');
 		loadingAnimation.classList.add('opacity-40');
@@ -35,7 +58,7 @@
 		});
 
 		const response = await startReg.json();
-		if (!startReg.ok) {
+		if (startReg.status != 200) {
 			if (startReg.status == 409) {
 				goto('/clinique/bonjour', {
 					state: {
@@ -44,15 +67,37 @@
 						reg_password: clinic_information.reg_password
 					}
 				});
+				return;
 			}
 			erroneousFields =
 				response.message == 'Bad request' ? ['*'] : await JSON.parse(response.message);
+
+			inputContent.classList.remove('opacity-0', 'pointer-events-none', 'select-none');
+			loadingAnimation.classList.add('opacity-0');
+			loadingAnimation.classList.remove('opacity-40');
+			return;
 		}
 
-		// load phone verification screen
+		otpElement.classList.remove('hidden');
 		loadingAnimation.classList.add('opacity-0');
 		loadingAnimation.classList.remove('opacity-40');
-		inputContent.classList.remove('opacity-0', 'pointer-events-none', 'select-none');
+		const new_login_information: LoginInformation = {
+			password: clinic_information.reg_password,
+			email: clinic_information.reg_email,
+			phone_number: clinic_information.phone
+		};
+		const login = await fetch('/clinique/bonjour', {
+			method: 'POST',
+			credentials: 'include',
+			body: JSON.stringify(new_login_information)
+		});
+		if (login.status != 200) {
+			inputContent.classList.remove('opacity-0', 'pointer-events-none', 'select-none');
+			loadingAnimation.classList.add('opacity-0');
+			loadingAnimation.classList.remove('opacity-40');
+			return;
+		}
+		NextBTNText = 'Vérifier le code';
 	};
 </script>
 
@@ -177,11 +222,31 @@
 					</div>
 				</fieldset>
 			</div>
+			<label class="otp absolute top-0 bottom-0 m-auto hidden self-center" bind:this={otpElement}>
+				<span class={otpClass}></span>
+				<span class={otpClass}></span>
+				<span class={otpClass}></span>
+				<span class={otpClass}></span>
+				<input
+					bind:value={verificationCodeVal}
+					type="text"
+					autocomplete="one-time-code"
+					inputmode="numeric"
+					maxlength="4"
+					pattern="[0-9]{4}"
+					required
+				/>
+			</label>
 			<button
 				onclick={setupRegistration}
 				class="btn mr-4 mb-4 ml-auto flex w-11/12 btn-neutral sm:w-max"
-				><img src="../arrow.svg" class="h-3 w-3 rotate-180 invert" alt="" /> Vérification du numéro de
-				téléphone</button
+				><img
+					src="../arrow.svg"
+					class="h-3 w-3 rotate-180 invert"
+					alt=""
+					contenteditable="false"
+					bind:textContent={NextBTNText}
+				/> Vérification du numéro de téléphone</button
 			>
 		</div>
 	</div>

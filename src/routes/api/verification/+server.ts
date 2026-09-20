@@ -14,5 +14,7 @@ export const GET = async ({ url, cookies }): Promise<Response> => {
     if (!code) throw error(401, 'Code de vérification introuvable!');
     if (providedCode != code) throw error(401, 'Code de vérification invalide!');
 
+
+    await redisClient.del("VERIF" + accId);
     return json(JSON.stringify({ success: true }));
 }

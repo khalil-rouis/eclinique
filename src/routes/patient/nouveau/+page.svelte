@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
-	import type { PatientInformation } from '$lib/types';
+	import type { LoginInformation, PatientInformation } from '$lib/types';
 	let inputContent: HTMLDivElement;
 	let loadingAnimation: HTMLImageElement;
 	let NextBTNText: string = $state('Vérification du numéro de téléphone');
@@ -37,6 +37,7 @@
 					}
 				});
 			}
+			return;
 		}
 
 		loadingAnimation.classList.remove('opacity-0');
@@ -60,14 +61,35 @@
 						reg_password: patient_information.reg_password
 					}
 				});
+				return;
 			}
 			erroneousFields =
 				response.message == 'Bad request' ? ['*'] : await JSON.parse(response.message);
+
+			inputContent.classList.remove('opacity-0', 'pointer-events-none', 'select-none');
+			loadingAnimation.classList.add('opacity-0');
+			loadingAnimation.classList.remove('opacity-40');
+			return;
 		}
 
 		otpElement.classList.remove('hidden');
 		loadingAnimation.classList.add('opacity-0');
 		loadingAnimation.classList.remove('opacity-40');
+		const new_login_information: LoginInformation = {
+			password: patient_information.reg_password,
+			phone_number: patient_information.phone
+		};
+		const login = await fetch('/clinique/bonjour', {
+			method: 'POST',
+			credentials: 'include',
+			body: JSON.stringify(new_login_information)
+		});
+		if (login.status != 200) {
+			inputContent.classList.remove('opacity-0', 'pointer-events-none', 'select-none');
+			loadingAnimation.classList.add('opacity-0');
+			loadingAnimation.classList.remove('opacity-40');
+			return;
+		}
 		NextBTNText = 'Vérifier le code';
 	};
 </script>
