@@ -5,7 +5,7 @@ import { appointmentsColl } from '$lib/mongodb';
 import { grabSession } from '$lib/session';
 
 export const DELETE: RequestHandler = async ({ params, cookies }) => {
-	if (!cookies.get('USID')) throw error(401, 'Bad session!');
+	if (!cookies.get('USID')) throw error(401, 'Mauvaise session!');
 	const session = await grabSession(cookies.get('USID'));
 	if (!session || !session.verified) throw error(401, 'Compte non vérifié!');
 

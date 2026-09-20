@@ -3,6 +3,9 @@
 	import type { PatientInformation } from '$lib/types';
 	let inputContent: HTMLDivElement;
 	let loadingAnimation: HTMLImageElement;
+	let NextBTNText: string = $state('Vérification du numéro de téléphone');
+	let otpElement: HTMLLabelElement;
+	let verificationCodeVal: string = $state('');
 
 	let patient_information: PatientInformation = $state({
 		full_name: '',
@@ -13,9 +16,28 @@
 	});
 
 	let erroneousFields: string[] = $state([]);
+	let otpClass = $derived(
+		erroneousFields.indexOf('verification_code') != -1 ? 'outline-red-500' : ''
+	);
 
 	const setupRegistration = async () => {
 		erroneousFields = [];
+
+		if (NextBTNText == 'Vérifier le code') {
+			const checkCode = await fetch('/api/verification?code=' + verificationCodeVal, {
+				credentials: 'include'
+			});
+			if (checkCode.status != 200) {
+				erroneousFields = ['verification_code'];
+			} else {
+				goto('/patient/bonjour', {
+					state: {
+						phone: patient_information.phone,
+						reg_password: patient_information.reg_password
+					}
+				});
+			}
+		}
 
 		loadingAnimation.classList.remove('opacity-0');
 		loadingAnimation.classList.add('opacity-40');
@@ -43,11 +65,10 @@
 				response.message == 'Bad request' ? ['*'] : await JSON.parse(response.message);
 		}
 
-		// add phone verification
-
+		otpElement.classList.remove('hidden');
 		loadingAnimation.classList.add('opacity-0');
 		loadingAnimation.classList.remove('opacity-40');
-		inputContent.classList.remove('opacity-0', 'pointer-events-none', 'select-none');
+		NextBTNText = 'Vérifier le code';
 	};
 </script>
 
@@ -112,11 +133,28 @@
 					</div>
 				</fieldset>
 			</div>
+			<label class="otp absolute top-0 bottom-0 m-auto hidden self-center" bind:this={otpElement}>
+				<span class={otpClass}></span>
+				<span class={otpClass}></span>
+				<span class={otpClass}></span>
+				<span class={otpClass}></span>
+				<input
+					bind:value={verificationCodeVal}
+					type="text"
+					autocomplete="one-time-code"
+					inputmode="numeric"
+					maxlength="4"
+					pattern="[0-9]{4}"
+					required
+				/>
+			</label>
 			<button
 				onclick={setupRegistration}
 				class="btn mr-4 mb-4 ml-auto flex w-11/12 btn-neutral sm:w-max"
-				><img src="../arrow.svg" class="h-3 w-3 rotate-180 invert" alt="" /> Vérification du numéro de
-				téléphone</button
+				><img src="../arrow.svg" class="h-3 w-3 rotate-180 invert" alt="" />
+				<span contenteditable="false" bind:textContent={NextBTNText}
+					>Vérification du numéro de téléphone</span
+				></button
 			>
 		</div>
 	</div>

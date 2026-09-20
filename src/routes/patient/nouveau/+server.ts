@@ -1,13 +1,13 @@
-import { error, redirect } from "@sveltejs/kit";
+import { error, json, redirect } from "@sveltejs/kit";
 import type { RequestHandler } from "./$types.js";
 import { PatientInformationSchema, type PatientInformation } from "$lib/types.js";
 import { setupNewPatientAccount } from "$lib/databaseman/accounts_manager.js";
+import { sendSMSVerificationMsg } from "$lib/sms/sms_verification.js";
 
 export const POST: RequestHandler = async ({ request }): Promise<Response> => {
     const provided_information:PatientInformation = await request.json();
     
-    let firstCheck = Object.keys(provided_information).map(key => !(provided_information as any)[key] ? key : undefined).filter(x => x);
-    
+    let firstCheck = Object.keys(provided_information).map(key => (provided_information as any)[key] == undefined ? key : undefined).filter(x => x);
     if (firstCheck.length > 0) {
         return error(400, JSON.stringify(firstCheck));
     }
@@ -20,7 +20,11 @@ export const POST: RequestHandler = async ({ request }): Promise<Response> => {
     if (typeof newUserId != "string" && newUserId.error) {
         return error(409, newUserId.dup_field);
     }
-    // setup phone verification with an id
+    
+    const smsVerif = await sendSMSVerificationMsg(newUserId);
+    if (!smsVerif) {
+        return error(400, "Impossible d'envoyer le SMS");
+    }
 
-    return redirect(302, "/..");
+    return json(JSON.stringify({ success: true }));
 }

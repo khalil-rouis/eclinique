@@ -5,9 +5,9 @@ import { appointmentsColl } from '$lib/mongodb';
 import { grabSession } from '$lib/session';
 
 export const PATCH: RequestHandler = async ({ params, request, cookies }) => {
-	if (!cookies.get('USID')) throw error(401, 'Bad session!');
+	if (!cookies.get('USID')) throw error(401, 'Mauvaise session!');
 	const session = await grabSession(cookies.get('USID'));
-	if (!session || !session.verified) throw error(401, 'Unverified acc!');
+	if (!session || !session.verified) throw error(401, 'Compte non vérifié!');
 
 	if (!ObjectId.isValid(params.id)) throw error(400, 'ID invalide');
 
